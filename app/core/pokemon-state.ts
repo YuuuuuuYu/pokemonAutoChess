@@ -648,6 +648,7 @@ export default abstract class PokemonState {
           pokemon.onDamageReceived({
             attacker,
             damage: takenDamage,
+            damageBeforeReduction: damage,
             board,
             attackType,
             isRetaliation
@@ -875,14 +876,6 @@ export default abstract class PokemonState {
     ) {
       pokemon.status.triggerBurn(60000, pokemon, pokemon)
     }
-
-    if (
-      pokemon.items.has(Item.TOXIC_ORB) &&
-      pokemon.status.poisonStacks === 0 &&
-      pokemon.action !== PokemonActionState.HOP
-    ) {
-      pokemon.status.triggerPoison(60000, pokemon, pokemon)
-    }
   }
 
   updateEachSecond(pokemon: PokemonEntity, board: Board) {
@@ -1068,7 +1061,12 @@ export default abstract class PokemonState {
       }
     }
     if (candidates.length > 0) {
-      return pickRandomIn(candidates)
+      const pokedollHolders = candidates.filter((p) =>
+        p.items.has(Item.POKE_DOLL)
+      )
+      return pickRandomIn(
+        pokedollHolders.length > 0 ? pokedollHolders : candidates
+      )
     } else {
       return undefined
     }

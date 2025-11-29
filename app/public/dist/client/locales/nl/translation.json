@@ -970,7 +970,6 @@
 		"WONDER_GUARD": "Breng [30,60,120,SP] SPECIAL toe aan alle aangrenzende vijandelijke Pokémon en pas de PARALYSIS status toe aan hen voor 3 seconden",
 		"ELECTRIC_SURGE": "Verhoog SPEED van alle ELECTRIC pokemons met [10,SP]",
 		"PSYCHIC_SURGE": "Verhoog AP van alle PSYCHIC Pokemons met [20,SP], behalve de caster",
-		"MIND_BLOWN": "Biedt [50,SP] % van de beoogde huidige HP aan als SPECIAL",
 		"PAYDAY": "Aanbiedingen [30,60,90,SP] SPECIAL. Als het doelwit KO is, ontvangt de speler [1,2,3] goud",
 		"BEAT_UP": "Roep [1,2,3] Houndour op ([100,SP]% HP, geen items)",
 		"BLUE_FLARE": "Veroorzaakt [50,SP] SPECIAL + 10 per fase van FIRE synergie",
@@ -1393,7 +1392,6 @@
 		"MAGIKARP": "8 Magikarp evolueren in Gyarados",
 		"GIRATINA": "Giratina wisselt tussen zijn Altered Forme en Origin Forme, afhankelijk van zijn positie op het bord",
 		"UNOWN": "Unown kan geen items vasthouden en verdwijnen na één gevecht of na het casten van hun vaardigheid",
-		"GLIGAR": "Gligar is op zoek naar een RAZOR_FANG. Als de Pokémon POISONNED is, krijgt hij HP in plaats van schade op te lopen.",
 		"GLISCOR": "Als de Pokémon POISONNED is, krijgt hij HP in plaats van schade op te lopen",
 		"GRIM_NEIGH": "Wanneer de Pokémon een vijand knock-out slaat, laat hij een angstaanjagend hinnikend geluid horen dat zijn AP met 30 verhoogt",
 		"SHAYMIN": "Shaymin is op zoek naar een GRACIDEA_FLOWER"

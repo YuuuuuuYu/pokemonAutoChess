@@ -1,26 +1,25 @@
 import { t } from "i18next"
-import React, { useState } from "react"
+import React from "react"
 import { Tab, TabList, TabPanel, Tabs } from "react-tabs"
-import { Tooltip } from "react-tooltip"
 import { PkmWithCustom } from "../../../../../types"
 import {
   Berries,
   CraftableItems,
+  HMs,
   Item,
   ItemComponents,
   MemoryDiscs,
   ShinyItems,
+  TMs,
   Tools
 } from "../../../../../types/enum/Item"
 import { ItemDetailTooltip } from "../../../game/components/item-detail"
 import { cc } from "../../utils/jsx"
 
 export default function ItemPicker(props: {
-  selected: PkmWithCustom | Item
-  selectEntity: React.Dispatch<React.SetStateAction<PkmWithCustom | Item>>
+  selected?: PkmWithCustom | Item
+  selectEntity?: React.Dispatch<React.SetStateAction<PkmWithCustom | Item>>
 }) {
-  const [itemHovered, setItemHovered] = useState<Item>()
-
   function handleOnDragStart(e: React.DragEvent, item: Item) {
     e.stopPropagation()
     e.dataTransfer.setData("text/plain", `item,${item}`)
@@ -42,6 +41,11 @@ export default function ItemPicker(props: {
     },
 
     { label: t("tools"), key: "tools", items: Tools },
+    {
+      label: t("tm_hm_short"),
+      key: "tm",
+      items: [...TMs, ...HMs]
+    },
     {
       label: t("shiny_items"),
       key: "shiny_items",
@@ -77,24 +81,16 @@ export default function ItemPicker(props: {
               className={cc("item", {
                 selected: item === props.selected
               })}
-              data-tooltip-id="item-detail"
-              onMouseOver={() => setItemHovered(item)}
-              onClick={() => props.selectEntity(item)}
+              data-tooltip-id="item-detail-tooltip"
+              data-tooltip-content={item}
+              onClick={() => props.selectEntity?.(item)}
               draggable
               onDragStart={(e) => handleOnDragStart(e, item)}
             />
           ))}
         </TabPanel>
       ))}
-      {itemHovered && (
-        <Tooltip
-          id="item-detail"
-          className="custom-theme-tooltip item-detail-tooltip"
-          float
-        >
-          <ItemDetailTooltip item={itemHovered} />
-        </Tooltip>
-      )}
+      <ItemDetailTooltip />
     </Tabs>
   )
 }

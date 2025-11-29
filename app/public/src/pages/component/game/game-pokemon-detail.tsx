@@ -2,6 +2,7 @@ import { GameObjects } from "phaser"
 import React, { useMemo } from "react"
 import ReactDOM from "react-dom/client"
 import { useTranslation } from "react-i18next"
+import { Tooltip } from "react-tooltip"
 import { ItemStats, RarityColor } from "../../../../../config"
 import { DishByPkm } from "../../../../../core/dishes"
 import PokemonFactory from "../../../../../models/pokemon-factory"
@@ -41,6 +42,7 @@ export function GamePokemonDetail(props: {
     | "battle"
     | "wiki"
     | "patchnotes"
+    | "after"
   shiny?: boolean
   emotion?: Emotion
   isAlly?: boolean
@@ -257,7 +259,15 @@ export function GamePokemonDetail(props: {
       {pokemon.passive !== Passive.NONE && (
         <div className="game-pokemon-detail-passive">
           <p>
-            {addIconsToDescription(t(`passive_description.${pokemon.passive}`))}
+            {addIconsToDescription(
+              t(`passive_description.${pokemon.passive}`),
+              {
+                ap: pokemon.ap,
+                luck: pokemon.luck,
+                stars: pokemon.stars,
+                stages: getPokemonData(pokemon.name).stages
+              }
+            )}
           </p>
           {pokemon.stacksRequired > 0 && (
             <div className="game-pokemon-detail-passive-bar">
@@ -307,10 +317,10 @@ export class GamePokemonDetailDOMWrapper extends GameObjects.DOMElement {
     x: number,
     y: number,
     pokemon: Pkm | IPokemon | IPokemonEntity,
+    origin: "shop" | "team" | "planner" | "battle" | "wiki",
+    isAlly: boolean = true,
     shiny?: boolean,
-    emotion?: Emotion,
-    origin: "shop" | "team" | "planner" | "battle" | "wiki" = "wiki",
-    isAlly: boolean = true
+    emotion?: Emotion
   ) {
     super(scene, x, y)
     this.dom = document.createElement("div")
@@ -352,4 +362,19 @@ export class GamePokemonDetailDOMWrapper extends GameObjects.DOMElement {
     this.root.unmount()
     super.destroy()
   }
+}
+
+export function GamePokemonDetailTooltip(props: {
+  origin: "wiki" | "patchnotes" | "after" | "planner"
+}) {
+  return (
+    <Tooltip
+      id="game-pokemon-detail-tooltip"
+      className="custom-theme-tooltip game-pokemon-detail-tooltip"
+      render={({ content }) => (
+        <GamePokemonDetail pokemon={content as Pkm} origin={props.origin} />
+      )}
+      float
+    />
+  )
 }

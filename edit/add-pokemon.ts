@@ -52,7 +52,15 @@ interface IDuration {
 }
 
 function formatPokemonName(index: string): string {
-  return `#${index} ${PkmByIndex[index] ?? "UNKNOWN"}`
+  let shiny = false
+  if (index.endsWith("-0001") && index.length === 14) {
+    shiny = true
+    index = index.slice(0, -5)
+    if (index.endsWith("-0000")) {
+      index = index.slice(0, -5)
+    }
+  }
+  return `#${index} ${PkmByIndex[index] ?? "UNKNOWN"}${shiny ? " (Shiny)" : ""}`
 }
 
 /**
@@ -523,7 +531,10 @@ function movePortrait(spriteCollabPath: string, pkmIndex: string) {
  */
 function updateEmotionsAndCredits(
   spriteCollabPath: string,
-  indexesToUpdate: string[] = Object.values(PkmIndex)
+  indexesToUpdate: string[] = Object.values(PkmIndex).flatMap((indexToAdd) => {
+    const shinyPad = indexToAdd.length === 4 ? "-0000-0001" : "-0001"
+    return [indexToAdd, `${indexToAdd}${shinyPad}`]
+  })
 ) {
   let tracker: Record<string, any> = {}
   try {
@@ -562,10 +573,10 @@ function updateEmotionsAndCredits(
   const emotions = Object.values(Emotion)
   for (const pkmIndex of indexesToUpdate) {
     const pathIndex = pkmIndex.split("-")
-    const metadata =
-      pathIndex.length == 1
-        ? tracker[pkmIndex]
-        : tracker[pathIndex[0]]?.subgroups[pathIndex[1]]
+    let metadata = tracker[pathIndex[0]]
+    for (let i = 1; i < pathIndex.length; i++) {
+      metadata = metadata?.subgroups?.[pathIndex[i]]
+    }
 
     if (metadata) {
       const emotionsAvailable = emotions.map((emotion) =>
@@ -784,7 +795,11 @@ async function main() {
 
       // Step 5: Updating emotions available and credits
       logger.info("Step 5/5: Updating emotions available and credits...")
-      updateEmotionsAndCredits(spriteCollabPath, [indexToAdd])
+      const shinyPad = indexToAdd.length === 4 ? "-0000-0001" : "-0001"
+      updateEmotionsAndCredits(spriteCollabPath, [
+        indexToAdd,
+        `${indexToAdd}${shinyPad}`
+      ])
 
       logger.info(
         `✅ Process completed successfully! ${formatPokemonName(indexToAdd)} has been added to the game assets.`

@@ -39,7 +39,7 @@ import { Pkm } from "../types/enum/Pokemon"
 import { SpecialGameRule } from "../types/enum/SpecialGameRule"
 import { Synergy } from "../types/enum/Synergy"
 import { Weather } from "../types/enum/Weather"
-import { count } from "../utils/array"
+import { count, isIn } from "../utils/array"
 import { isOnBench } from "../utils/board"
 import { distanceC, distanceM } from "../utils/distance"
 import { isPlainFunction } from "../utils/function"
@@ -653,7 +653,7 @@ export class PokemonEntity extends Schema implements IPokemonEntity {
     const type = SynergyGivenByItem[item]
     if (
       this.items.size >= 3 ||
-      (SynergyStones.includes(item) && this.types.has(type)) ||
+      (isIn(SynergyStones, item) && this.types.has(type)) ||
       ((item === Item.EVIOLITE || item === Item.RARE_CANDY) &&
         !this.refToBoardPokemon.hasEvolution) ||
       (item === Item.RARE_CANDY && this.items.has(Item.EVIOLITE))
@@ -670,7 +670,11 @@ export class PokemonEntity extends Schema implements IPokemonEntity {
     }
 
     if (type && !this.types.has(type)) {
-      this.types.add(type)
+      if (type === Synergy.DRAGON) {
+        this.types = new SetSchema<Synergy>([type, ...this.types])
+      } else {
+        this.types.add(type)
+      }
       this.simulation.applySynergyEffects(this, type)
     }
   }
@@ -1031,12 +1035,14 @@ export class PokemonEntity extends Schema implements IPokemonEntity {
   onDamageReceived({
     attacker,
     damage,
+    damageBeforeReduction,
     board,
     attackType,
     isRetaliation
   }: {
     attacker: PokemonEntity | null
     damage: number
+    damageBeforeReduction: number
     board: Board
     attackType: AttackType
     isRetaliation: boolean
@@ -1064,6 +1070,7 @@ export class PokemonEntity extends Schema implements IPokemonEntity {
         attacker,
         board,
         damage,
+        damageBeforeReduction,
         attackType,
         isRetaliation
       })

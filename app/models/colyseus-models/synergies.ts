@@ -1,4 +1,4 @@
-import { MapSchema } from "@colyseus/schema"
+import { MapSchema, SetSchema } from "@colyseus/schema"
 import { SynergyTriggers } from "../../config"
 import { IPokemon } from "../../types"
 import { SynergyGivenByItem } from "../../types/enum/Item"
@@ -8,14 +8,11 @@ import { SpecialGameRule } from "../../types/enum/SpecialGameRule"
 import { Synergy } from "../../types/enum/Synergy"
 import { values } from "../../utils/schemas"
 
-export default class Synergies
-  extends MapSchema<number, Synergy>
-  implements Map<Synergy, number>
-{
-  constructor() {
+export default class Synergies extends MapSchema<number, Synergy> {
+  constructor(synergies?: Map<Synergy, number>) {
     super()
     Object.keys(Synergy).forEach((key) => {
-      this.set(key as Synergy, 0)
+      this.set(key as Synergy, synergies?.get(key as Synergy) ?? 0)
     })
   }
 
@@ -195,7 +192,11 @@ export function addSynergiesGivenByItems(pkm: IPokemon) {
   pkm.items.forEach((item) => {
     const synergy = SynergyGivenByItem[item]
     if (synergy) {
-      pkm.types.add(synergy)
+      if (synergy === Synergy.DRAGON) {
+        pkm.types = new SetSchema<Synergy>([synergy, ...pkm.types])
+      } else {
+        pkm.types.add(synergy)
+      }
     }
   })
 }

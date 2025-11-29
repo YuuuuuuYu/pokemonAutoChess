@@ -31,7 +31,6 @@ import {
 } from "../../../../types/enum/Game"
 import { Item } from "../../../../types/enum/Item"
 import { Pkm, PkmByIndex } from "../../../../types/enum/Pokemon"
-import { logger } from "../../../../utils/logger"
 import { min } from "../../../../utils/number"
 import {
   OrientationArray,
@@ -275,10 +274,8 @@ export default class PokemonSprite extends DraggableObject {
 
       scene.animationManager?.animatePokemon(this, pokemon.action, this.flip)
       this.shadow?.setVisible(true)
-      if (!isEntity(pokemon)) {
-        if (pokemon.supercharged) {
-          this.superchargeAnimation(scene, false)
-        }
+      if (!isEntity(pokemon) && pokemon.supercharged) {
+        this.superchargeAnimation(scene, true, false)
       }
       this.emit("loaded")
     })
@@ -404,8 +401,6 @@ export default class PokemonSprite extends DraggableObject {
       0,
       0,
       this.pokemon,
-      undefined,
-      undefined,
       this.inBattle ? "battle" : "team",
       this.playerId === s.uid
     )
@@ -803,16 +798,17 @@ export default class PokemonSprite extends DraggableObject {
 
   superchargeAnimation(
     scene: GameScene | DebugScene,
-    justHappened: boolean = false
+    alreadyActive: boolean,
+    onEntity: boolean
   ) {
     this.addElectricField()
     this.sprite.postFX.addGlow(0xffff00, 4, 0, false, 0.1, 8)
     this.emoteAnimation()
-    if (justHappened) {
+    if (!alreadyActive) {
       if (!preference("disableCameraShake")) scene.cameras.main.flash(250)
       this.displayAnimation(Ability.THUNDER_SHOCK, {
         targetX: this.positionX,
-        targetY: this.positionY - 1
+        targetY: onEntity ? this.positionY : this.positionY - 1
       })
     }
   }
@@ -1314,9 +1310,9 @@ export default class PokemonSprite extends DraggableObject {
   addElectricField() {
     if (!this.electricField) {
       this.electricField = this.scene.add
-        .sprite(0, 10, "status", "ELECTRIC_FIELD/000.png")
+        .sprite(3, 3, "status", "ELECTRIC_FIELD/000.png")
         .setDepth(DEPTH.BOARD_EFFECT_GROUND_LEVEL)
-        .setScale(1.5)
+        .setScale(1)
       this.electricField.anims.play("ELECTRIC_FIELD")
       this.add(this.electricField)
       this.bringToTop(this.sprite)
@@ -1355,7 +1351,7 @@ export default class PokemonSprite extends DraggableObject {
       this.fairyField = this.scene.add
         .sprite(0, 10, "status", "FAIRY_FIELD/000.png")
         .setDepth(DEPTH.BOARD_EFFECT_GROUND_LEVEL)
-        .setScale(1)
+        .setScale(1.5)
       this.fairyField.anims.play("FAIRY_FIELD")
       this.add(this.fairyField)
       this.bringToTop(this.sprite)

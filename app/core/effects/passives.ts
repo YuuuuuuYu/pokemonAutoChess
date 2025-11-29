@@ -1,3 +1,4 @@
+import { entity } from "@colyseus/schema"
 import { BOARD_HEIGHT, BOARD_WIDTH } from "../../config"
 import {
   BasculinWhite,
@@ -265,6 +266,7 @@ const KubfuOnKillEffect = new OnKillEffect(
     pokemon.refToBoardPokemon.stacks = max(MAX_BUFFS)(
       Math.max(nbBuffsAP, nbBuffsSpeed)
     )
+    pokemon.stacks = pokemon.refToBoardPokemon.stacks // update entity tooltip in real time
   },
   Passive.KUBFU
 )
@@ -583,7 +585,6 @@ class ZygardeCellsEffect extends PeriodicEffect {
               pokemon.name = Pkm.ZYGARDE_100
               pokemon.changePassive(Passive.NONE)
               pokemon.skill = Ability.CORE_ENFORCER
-              pokemon.pp = 0
               pokemon.effectsSet.delete(this)
               if (pokemon.player) {
                 pokemon.player.pokemonsPlayed.add(Pkm.ZYGARDE_100)
@@ -1012,6 +1013,46 @@ const addPrimeapeStack = ({ pokemon }: OnDeathEffectArgs) => {
   pokemon.addStack()
 }
 
+const superchargeTadbulb = (pokemon: PokemonEntity, board: Board) => {
+  if (pokemon.status.electricField === false || pokemon.status.light) {
+    pokemon.status.electricField = true
+    pokemon.addSpeed(30, pokemon, 0, false)
+    pokemon.broadcastAbility({ skill: "SUPERCHARGE" })
+  }
+  board
+    .getAdjacentCells(pokemon.positionX, pokemon.positionY)
+    .forEach((cell) => {
+      if (cell.value && cell.value.team !== pokemon.team) {
+        const orientation = board.orientation(
+          pokemon.positionX,
+          pokemon.positionY,
+          cell.value.positionX,
+          cell.value.positionY,
+          pokemon,
+          undefined
+        )
+        const destination = board.getKnockBackPlace(
+          cell.value.positionX,
+          cell.value.positionY,
+          orientation
+        )
+
+        if (destination) {
+          cell.value.moveTo(destination.x, destination.y, board, true)
+          cell.value.cooldown = 500
+        }
+
+        cell.value.handleSpecialDamage(
+          30,
+          board,
+          AttackType.SPECIAL,
+          pokemon,
+          false
+        )
+      }
+    })
+}
+
 export const PassiveEffects: Partial<
   Record<Passive, (Effect | (() => Effect))[]>
 > = {
@@ -1181,6 +1222,7 @@ export const PassiveEffects: Partial<
       const pokemon = attacker.refToBoardPokemon
       if (pokemon && pokemon instanceof BasculinWhite) {
         pokemon.stacks = Math.max(pokemon.deathCount, pokemon.killCount)
+        attacker.stacks = pokemon.stacks // update entity tooltip in real time
         if (
           pokemon.killCount === pokemon.stacksRequired &&
           pokemon.deathCount < pokemon.stacksRequired
@@ -1251,5 +1293,55 @@ export const PassiveEffects: Partial<
   [Passive.PRIMEAPE]: [
     new OnResurrectEffect(addPrimeapeStack, Passive.PRIMEAPE),
     new OnDeathEffect(addPrimeapeStack, Passive.PRIMEAPE)
+  ],
+  [Passive.GEARS]: [
+    new OnSimulationStartEffect(({ simulation, entity }) => {
+      simulation.board.forEach((x, y, pkm) => {
+        if (pkm && pkm.team === entity.team) {
+          pkm.effectsSet.add(
+            new PeriodicEffect(
+              (pokemon) => {
+                if (entity.hp > 0) {
+                  pokemon.addSpeed(1, pokemon, 0, false)
+                }
+              },
+              Passive.GEARS,
+              1000
+            )
+          )
+        }
+      })
+    }, Passive.GEARS)
+  ],
+  [Passive.TADBULB]: [
+    new OnSimulationStartEffect(({ simulation, entity }) => {
+      if (entity.status.light) {
+        superchargeTadbulb(entity, simulation.board)
+      }
+    }),
+    new OnDamageReceivedEffect(({ pokemon, damageBeforeReduction, board }) => {
+      if (damageBeforeReduction >= 50) {
+        superchargeTadbulb(pokemon, board)
+      }
+    })
+  ],
+  [Passive.PINCURCHIN]: [
+    new OnDamageReceivedEffect(({ pokemon, attackType, attacker }) => {
+      if (attackType === AttackType.SPECIAL) {
+        pokemon.status.electricField = true
+      }
+      if (
+        pokemon.status.electricField &&
+        attacker &&
+        distanceC(
+          pokemon.positionX,
+          pokemon.positionY,
+          attacker.positionX,
+          attacker.positionY
+        ) <= 1
+      ) {
+        attacker.status.triggerParalysis(2000, attacker, pokemon)
+      }
+    })
   ]
 }
